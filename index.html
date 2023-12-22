@@ -16,6 +16,10 @@
     <body>
         <section class="container">
             <section>
+                <div>
+                    <input id="search-input" type="text" />
+                    <button onclick="getNewsByKeyword()">검색</button>
+                </div>
                 <div class="head-line">
                     <svg viewBox="0 0 184 25" fill="#000" aria-hidden="true">
                         <path
@@ -48,6 +52,9 @@
                     </div>
                 </div>
             </section>
+            <nav aria-label="Page navigation example">
+                <ul class="pagination"></ul>
+            </nav>
         </section>
         <script src="main.js"></script>
         <script

@@ -5,29 +5,59 @@ menus.forEach((menu) =>
     menu.addEventListener('click', (event) => getNewsByCategory(event))
 );
 
+let url = new URL(
+    `https://newsapi.org/v2/top-headlines?country=kr&apiKey=${API_KEY}`
+);
+
+let totalResults = 0;
+let page = 1;
+const pageSize = 10;
+const groupSize = 5;
+
 const getLatestNews = async () => {
-    const url = new URL(
+    url = new URL(
         `https://newsapi.org/v2/top-headlines?country=kr&apiKey=${API_KEY}`
     );
 
-    const response = await fetch(url);
-    const data = await response.json();
-    newsList = data.articles;
-    render();
-    console.log('dddd', newsList);
+    getNews();
+};
+
+const getNews = async () => {
+    try {
+        url.searchParams.set('page', page);
+        url.searchParams.set('pageSize', pageSize);
+        const response = await fetch(url);
+        const data = await response.json();
+        if (response.status === 200) {
+            if (data.articles.length === 0) {
+                throw new Error('no result for this search');
+            }
+            newsList = data.articles;
+            totalResults = data.totalResults;
+            render();
+            paginationRender();
+        } else {
+            throw new Error(date.message);
+        }
+    } catch (error) {
+        errorRender(error.message);
+    }
 };
 
 const getNewsByCategory = async (event) => {
     const category = event.target.textContent;
-    console.log('category', category);
-    const url = new URL(
+    url = new URL(
         `https://newsapi.org/v2/top-headlines?country=kr&category=${category}&apiKey=${API_KEY}`
     );
-    const response = await fetch(url);
-    const data = await response.json();
-    console.log('Ddd', data);
-    newsList = data.articles;
-    render();
+    getNews();
+};
+
+const getNewsByKeyword = async () => {
+    const keyword = document.getElementById('search-input').value;
+    url = new URL(
+        `https://newsapi.org/v2/top-headlines?country=kr&q=${keyword}&apiKey=${API_KEY}`
+    );
+    getNews();
 };
 
 const render = () => {
@@ -49,6 +79,46 @@ const render = () => {
         )
         .join('');
     document.getElementById('news-board').innerHTML = newsHTML;
+};
+
+const errorRender = (errorMessage) => {
+    const errorHTML = `<div class="alert alert-danger" role="alert">
+${errorMessage}
+</div>`;
+    document.getElementById('news-board').innerHTML = errorHTML;
+};
+
+const paginationRender = () => {
+    const totalPages = Math.ceil(totalResults / pageSize);
+    const pageGroup = Math.ceil(page / groupSize);
+
+    let lastPage = pageGroup * groupSize;
+
+    if (lastPage > totalPages) {
+        lastPage = totalPages;
+    }
+
+    const firstPage =
+        lastPage - (groupSize - 1) <= 0 ? 1 : lastPage - (groupSize - 1);
+
+    let paginationHTML = `<li class="page-item" onClick="moveToPage(${
+        page - 1
+    })"><a class="page-link" href="#">Previous</a></li>`;
+    for (let i = firstPage; i <= lastPage; i++) {
+        paginationHTML += `<li class="page-item ${
+            i === page ? 'active' : ''
+        }" onClick="moveToPage(${i})"><a class="page-link">${i}</a></li>`;
+    }
+    paginationHTML += `    <li class="page-item" onClick="moveToPage(${
+        page + 1
+    })"><a class="page-link" href="#">Next</a></li>`;
+    document.querySelector('.pagination').innerHTML = paginationHTML;
+};
+
+const moveToPage = (pageNum) => {
+    console.log('movetopage', pageNum);
+    page = pageNum;
+    getNews();
 };
 
 getLatestNews();
