@@ -1,124 +1,77 @@
-const API_KEY = '866f40c6c75b4b7b97d7e8aa8744163f';
-let newsList = [];
-const menus = document.querySelectorAll('.menus button');
-menus.forEach((menu) =>
-    menu.addEventListener('click', (event) => getNewsByCategory(event))
-);
+const container = document.querySelector('.container');
+const search = document.querySelector('.search-box button');
+const weatherBox = document.querySelector('.weather-box');
+const weatherDetails = document.querySelector('.weather-details');
+const error404 = document.querySelector('.not-found');
 
-let url = new URL(
-    `https://newsapi.org/v2/top-headlines?country=kr&apiKey=${API_KEY}`
-);
 
-let totalResults = 0;
-let page = 1;
-const pageSize = 10;
-const groupSize = 5;
+search.addEventListener('click', async ()=> {
 
-const getLatestNews = async () => {
-    url = new URL(
-        `https://newsapi.org/v2/top-headlines?country=kr&apiKey=${API_KEY}`
-    );
+    const API_KEY = `f8106b3d31a9d866511bdcee307b1591`;
+    const city = document.querySelector('.search-box input').value;
 
-    getNews();
-};
+    if (city === '') {
+        alert('도시 이름을 입력해주세요.')
+        return;
+    }
 
-const getNews = async () => {
     try {
-        url.searchParams.set('page', page);
-        url.searchParams.set('pageSize', pageSize);
-        const response = await fetch(url);
-        const data = await response.json();
-        if (response.status === 200) {
-            if (data.articles.length === 0) {
-                throw new Error('no result for this search');
-            }
-            newsList = data.articles;
-            totalResults = data.totalResults;
-            render();
-            paginationRender();
-        } else {
-            throw new Error(date.message);
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}`);
+        const json = await response.json();
+
+        if (json.cod === '404') {
+            container.style.height = '404px';
+            weatherBox.style.display = 'none';
+            weatherDetails.style.display = 'none';
+            error404.style.display = 'block';
+            error404.classList.add('fadeIn');
+            return;
         }
-    } catch (error) {
-        errorRender(error.message);
-    }
-};
 
-const getNewsByCategory = async (event) => {
-    const category = event.target.textContent;
-    url = new URL(
-        `https://newsapi.org/v2/top-headlines?country=kr&category=${category}&apiKey=${API_KEY}`
-    );
-    getNews();
-};
+            error404.style.display = 'none';
+            error404.classList.remove('fadeIn');
 
-const getNewsByKeyword = async () => {
-    const keyword = document.getElementById('search-input').value;
-    url = new URL(
-        `https://newsapi.org/v2/top-headlines?country=kr&q=${keyword}&apiKey=${API_KEY}`
-    );
-    getNews();
-};
+            const image = document.querySelector('.weather-box img');
+            const temperature = document.querySelector('.weather-box .temperature');
+            const description =  document.querySelector('.weather-box .description');
+            const humidity = document.querySelector('.weather-details .humidity span');
+            const wind = document.querySelector('.weather-details .wind span');
 
-const render = () => {
-    const newsHTML = newsList
-        .map(
-            (news) => ` <div class="row news">
-    <div class="col-lg-4">
-        <img
-            class="news-img-size"
-            src="${news.urlToImage}"
-        />
-    </div>
-    <div class="col-lg-8">
-        <h2>${news.title}</h2>
-        <p>${news.description}</p>
-        <div>${news.source.name} * ${news.publishedAt}</div>
-    </div>
-</div>`
-        )
-        .join('');
-    document.getElementById('news-board').innerHTML = newsHTML;
-};
+            switch (json.weather[0].main) {
+                case 'Clear' :
+                    image.src = 'images/clear.png';
+                    break;
 
-const errorRender = (errorMessage) => {
-    const errorHTML = `<div class="alert alert-danger" role="alert">
-${errorMessage}
-</div>`;
-    document.getElementById('news-board').innerHTML = errorHTML;
-};
+                case 'Rain' :
+                    image.src = 'images/rain.png';
+                    break;
 
-const paginationRender = () => {
-    const totalPages = Math.ceil(totalResults / pageSize);
-    const pageGroup = Math.ceil(page / groupSize);
+                case 'Snow' :
+                    image.src = 'images/snow.png';
+                    break;
 
-    let lastPage = pageGroup * groupSize;
+                case 'Clouds' :
+                    image.src = 'images/clouds.png';
+                    break;
 
-    if (lastPage > totalPages) {
-        lastPage = totalPages;
-    }
+                case 'Haze' :
+                    image.src = 'images/haze.png';
+                    break;
 
-    const firstPage =
-        lastPage - (groupSize - 1) <= 0 ? 1 : lastPage - (groupSize - 1);
-
-    let paginationHTML = `<li class="page-item" onClick="moveToPage(${
-        page - 1
-    })"><a class="page-link" href="#">Previous</a></li>`;
-    for (let i = firstPage; i <= lastPage; i++) {
-        paginationHTML += `<li class="page-item ${
-            i === page ? 'active' : ''
-        }" onClick="moveToPage(${i})"><a class="page-link">${i}</a></li>`;
-    }
-    paginationHTML += `    <li class="page-item" onClick="moveToPage(${
-        page + 1
-    })"><a class="page-link" href="#">Next</a></li>`;
-    document.querySelector('.pagination').innerHTML = paginationHTML;
-};
-
-const moveToPage = (pageNum) => {
-    console.log('movetopage', pageNum);
-    page = pageNum;
-    getNews();
-};
-
-getLatestNews();
+                default :
+                    image.src = '';
+            }
+                    temperature.innerHTML = `${parseInt(json.main.temp)}<span>도</span>`;
+                    description.innerHTML = `${json.weather[0].description}`;
+                    humidity.innerHTML = `${json.main.humidity}%`;
+                    wind.innerHTML = `${parseInt(json.wind.speed)}Km/h`;
+                    weatherBox.style.display = '';
+                    weatherDetails.style.display = '';
+                    weatherBox.classList.add('fadeIn');
+                    weatherDetails.classList.add('fadeIn');
+                    container.style.height = '590px';
+            }
+    catch (error) {
+                console.error('Error fetching weather data', error);
+            };
+});
