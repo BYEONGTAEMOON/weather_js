@@ -16,7 +16,7 @@ search.addEventListener('click', async ()=> {
     }
 
     try {
-        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}`);
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric&lang=kr`);
         const json = await response.json();
 
         if (json.cod === '404') {
@@ -61,7 +61,7 @@ search.addEventListener('click', async ()=> {
                 default :
                     image.src = '';
             }
-                    temperature.innerHTML = `${parseInt(json.main.temp)}<span>도</span>`;
+                    temperature.innerHTML = `${parseInt(json.main.temp)}<span>°C</span>`;
                     description.innerHTML = `${json.weather[0].description}`;
                     humidity.innerHTML = `${json.main.humidity}%`;
                     wind.innerHTML = `${parseInt(json.wind.speed)}Km/h`;
